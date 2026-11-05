@@ -223,24 +223,21 @@ private struct HistoryRow: View {
                     .frame(width: 24, height: 24)
                     .background(EchoStyle.surface, in: RoundedRectangle(cornerRadius: EchoStyle.small))
                     .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: EchoStyle.small) {
-                        Text(item.preview)
-                            .font(.body)
-                            .lineLimit(1)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        HStack(spacing: EchoStyle.small) {
-                            if item.isPinned {
-                                Label("Pinned", systemImage: "pin.fill")
-                            } else {
-                                Text(item.kind == .image ? "Image" : "Text")
-                            }
-                            if item.isSensitive {
-                                Label("Hidden", systemImage: "eye.slash")
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text(item.preview)
+                        .font(.body)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if item.isPinned {
+                        Image(systemName: "pin.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Pinned clip")
+                    }
+                    if item.isSensitive {
+                        Image(systemName: "eye.slash")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Hidden contents")
                     }
                     if isSelected {
                         Image(systemName: "return")
