@@ -238,8 +238,6 @@ private struct HistoryRow: View {
                             if item.isSensitive {
                                 Label("Hidden", systemImage: "eye.slash")
                             }
-                            Text("·")
-                            Text(item.date, style: .relative)
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -258,7 +256,6 @@ private struct HistoryRow: View {
             .buttonStyle(.borderless)
             .focused($focused)
             .onChange(of: focused) { if $0 { onFocus() } }
-            .help("Paste this \(item.kind.rawValue) clip")
             .accessibilityHint("Copies this clip and pastes it into the previous app")
             Menu {
                 actions
@@ -279,6 +276,7 @@ private struct HistoryRow: View {
                 .strokeBorder(focused ? Color.accentColor : .clear, lineWidth: 2)
         }
         .onHover { hovered = $0 }
+        .help("Copied \(item.date.formatted(date: .abbreviated, time: .standard))")
         .contextMenu { actions }
     }
 
