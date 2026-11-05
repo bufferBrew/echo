@@ -61,7 +61,7 @@ struct PreferencesView: View {
                 .padding(EchoStyle.medium)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Label("Up to 300 clips, stored locally on this Mac.", systemImage: "internaldrive")
+            Label("300 recent clips plus pins, stored on this Mac.", systemImage: "internaldrive")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(EchoStyle.inset)

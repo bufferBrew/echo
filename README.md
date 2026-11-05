@@ -6,11 +6,14 @@ A lightweight, native macOS clipboard history app. Find a previous clip, press R
 
 ## Features
 
-- Keeps your latest 300 text and image clips locally on your Mac.
+- Keeps your latest 300 text and image clips, plus pinned clips, locally on your Mac.
 - Search history and filter by text or images.
 - Compact, resizable popup near the text caret, with a mouse-position fallback.
 - Navigate clips with arrow keys and paste with Return or a click.
 - Customizable global shortcut; defaults to **⌘⇧V**.
+- Pin frequently used clips at the top, or remove individual clips.
+- Edit a text clip in place or save a fragment as a new clip.
+- Give text clips searchable aliases and optionally hide their contents.
 - Native light and dark appearance, keyboard focus indicators, and accessible controls.
 - Settings and history clearing from the popup or menu bar.
 
@@ -45,6 +48,18 @@ open Echo.app
 
 Automatic paste requires **System Settings → Privacy & Security → Accessibility → Echo**. Without permission, selecting a clip still copies it to the clipboard so you can paste with **⌘V**. Ad-hoc builds can require granting permission again after rebuilding; see [stable local signing](SIGNING.md).
 
+## Clip actions
+
+Open the **…** menu beside a clip, or right-click it:
+
+- **Pin to Top / Unpin** keeps a clip available beyond normal history cleanup.
+- **Edit Clip…** changes a text clip in place; **Edit as New Clip…** creates a separate entry and preserves the original.
+- **Remove from History** deletes a clip and its saved image, if any.
+
+In the text editor, add an optional **alias** for commonly used text. Enable **Hide clip contents** and provide an alias to display only that alias in the popup. Hidden clips are searchable by alias rather than their contents and still paste their full text. The editor masks hidden text until you choose **Show text in editor**.
+
+Hiding is a display feature: history is stored **unencrypted** on your Mac. Echo is not a password vault. **Clear History…** removes pinned clips too. Removing history does not erase text already on the system clipboard or in another app.
+
 ## Local storage
 
 History and images are stored in `~/Library/Application Support/Echo`. History is persisted as JSON and images as PNG files. The app has no network service or account; clips stay on your Mac. Clear saved clips using **Clear History…** in Echo's menu.
@@ -52,8 +67,8 @@ History and images are stored in `~/Library/Application Support/Echo`. History i
 ## Navigation checks
 
 ```sh
-swiftc Sources/Echo/ClipboardItem.swift Sources/Echo/HistoryViewModel.swift Tests/main.swift -o /tmp/echo-navigation-tests
+swiftc Sources/Echo/ClipboardItem.swift Sources/Echo/HistoryViewModel.swift Sources/Echo/HistoryStore.swift Tests/main.swift -o /tmp/echo-navigation-tests
 /tmp/echo-navigation-tests
 ```
 
-These checks cover filtering, search, selection bounds, and reopening state. Cross-app paste also requires a manual check in an editable destination with Accessibility permission enabled.
+These checks cover filtering, selection, legacy history decoding, pinned retention, editing, hidden alias search, persistence, and image removal. Cross-app paste also requires a manual check in an editable destination with Accessibility permission enabled.

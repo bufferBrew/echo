@@ -142,6 +142,6 @@ Use `./build.sh --no-install` to assemble a local app without replacing an insta
 On a Command Line Tools installation without XCTest, run:
 
 ```bash
-swiftc Sources/Echo/ClipboardItem.swift Sources/Echo/HistoryViewModel.swift Tests/main.swift -o /tmp/echo-navigation-tests
+swiftc Sources/Echo/ClipboardItem.swift Sources/Echo/HistoryViewModel.swift Sources/Echo/HistoryStore.swift Tests/main.swift -o /tmp/echo-navigation-tests
 /tmp/echo-navigation-tests
 ```

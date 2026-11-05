@@ -114,7 +114,7 @@ final class StatusBarController: NSObject, NSWindowDelegate {
         close()
         let alert = NSAlert()
         alert.messageText = "Clear clipboard history?"
-        alert.informativeText = "All saved text and images will be removed from Echo. This cannot be undone."
+        alert.informativeText = "All saved text and images, including pinned clips, will be removed from Echo. This cannot be undone."
         alert.addButton(withTitle: "Cancel")
         alert.addButton(withTitle: "Clear History")
         if alert.runModal() == .alertSecondButtonReturn { store.clearAll() }
@@ -161,7 +161,7 @@ final class StatusBarController: NSObject, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        guard panel.isVisible else { return }
+        guard panel.isVisible, panel.attachedSheet == nil else { return }
         lastResignClose = Date()
         close()
     }
@@ -246,7 +246,8 @@ final class StatusBarController: NSObject, NSWindowDelegate {
         removeKeyMonitor()
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, self.panel.isVisible, NSApp.keyWindow === self.panel,
-                  self.panel.attachedSheet == nil else { return event }
+                  self.panel.attachedSheet == nil,
+                  RunLoop.current.currentMode != .eventTracking else { return event }
             return self.handleKeyDown(event)
         }
     }

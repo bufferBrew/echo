@@ -22,7 +22,8 @@ final class HistoryViewModel: ObservableObject {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return items.filter { item in
             let matchesKind = filter == .all || (filter == .text ? item.kind == .text : item.kind == .image)
-            return matchesKind && (query.isEmpty || item.preview.localizedCaseInsensitiveContains(query))
+            let searchable = item.isSensitive ? (item.alias ?? "") : [item.alias, item.text, item.preview].compactMap { $0 }.joined(separator: " ")
+            return matchesKind && (query.isEmpty || searchable.localizedCaseInsensitiveContains(query))
         }
     }
 

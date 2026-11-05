@@ -9,9 +9,9 @@ final class HistoryStore: ObservableObject {
     private let imagesDir: URL
     private let indexFile: URL
 
-    init() {
+    init(directory: URL? = nil) {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        supportDir = base.appendingPathComponent("Echo", isDirectory: true)
+        supportDir = directory ?? base.appendingPathComponent("Echo", isDirectory: true)
         imagesDir = supportDir.appendingPathComponent("Images", isDirectory: true)
         indexFile = supportDir.appendingPathComponent("history.json")
         try? FileManager.default.createDirectory(at: imagesDir, withIntermediateDirectories: true)
@@ -21,10 +21,10 @@ final class HistoryStore: ObservableObject {
     // MARK: - Mutations
 
     func addText(_ text: String) {
-        if let first = items.first, first.kind == .text, first.text == text {
+        if let existing = items.first(where: { $0.kind == .text && $0.text == text }) {
+            touch(existing) // Recopying a pinned clip must preserve its identity and pin.
             return
         }
-        items.removeAll { $0.kind == .text && $0.text == text }
         items.insert(ClipboardItem(kind: .text, text: text), at: 0)
         trimAndSave()
     }
@@ -47,7 +47,38 @@ final class HistoryStore: ObservableObject {
         guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
         let existing = items.remove(at: idx)
         items.insert(existing, at: 0)
-        save()
+        trimAndSave()
+    }
+
+    /// Save an explicit edit without rewriting or deduplicating its source clip.
+    @discardableResult
+    func saveText(_ text: String, alias: String, isSensitive: Bool, replacing item: ClipboardItem? = nil) -> UUID? {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        let name = alias.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isSensitive || !name.isEmpty else { return nil }
+        let savedID: UUID
+        if let item {
+            guard item.kind == .text,
+                  let index = items.firstIndex(where: { $0.id == item.id }) else { return nil }
+            items[index].text = text
+            items[index].alias = name.isEmpty ? nil : name
+            items[index].isSensitive = isSensitive
+            savedID = item.id
+        } else {
+            var clip = ClipboardItem(kind: .text, text: text)
+            clip.alias = name.isEmpty ? nil : name
+            clip.isSensitive = isSensitive
+            savedID = clip.id
+            items.insert(clip, at: 0)
+        }
+        trimAndSave()
+        return savedID
+    }
+
+    func togglePin(_ item: ClipboardItem) {
+        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
+        items[index].isPinned.toggle()
+        trimAndSave()
     }
 
     func remove(_ item: ClipboardItem) {
@@ -76,15 +107,14 @@ final class HistoryStore: ObservableObject {
     // MARK: - Persistence
 
     private func trimAndSave() {
-        if items.count > maxItems {
-            let overflow = items.suffix(from: maxItems)
-            for item in overflow where item.kind == .image {
-                if let name = item.imageFileName {
-                    try? FileManager.default.removeItem(at: imagesDir.appendingPathComponent(name))
-                }
+        let pinned = items.filter(\.isPinned)
+        let recent = items.filter { !$0.isPinned }
+        for item in recent.dropFirst(maxItems) where item.kind == .image {
+            if let name = item.imageFileName {
+                try? FileManager.default.removeItem(at: imagesDir.appendingPathComponent(name))
             }
-            items = Array(items.prefix(maxItems))
         }
+        items = pinned + recent.prefix(maxItems)
         save()
     }
 
@@ -96,6 +126,6 @@ final class HistoryStore: ObservableObject {
     private func load() {
         guard let data = try? Data(contentsOf: indexFile),
               let decoded = try? JSONDecoder().decode([ClipboardItem].self, from: data) else { return }
-        items = decoded
+        items = decoded.filter(\.isPinned) + decoded.filter { !$0.isPinned }
     }
 }
